@@ -3,8 +3,11 @@ package com.nurkiewicz.rxjava.util;
 import io.reactivex.Flowable;
 
 import java.io.*;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Urls {
@@ -19,7 +22,14 @@ public class Urls {
 	
 	private static Flowable<URL> load(String fileName) {
 		try (Stream<String> lines = classpathReaderOf(fileName).lines()) {
-			return Flowable.empty();
+			final List<URL> all = lines.map(s -> {
+				try {
+					return new URL(s);
+				} catch (MalformedURLException ex) {
+					throw new IllegalArgumentException(ex);
+				}
+			}).collect(Collectors.toList());
+			return Flowable.fromIterable(all);
 		} catch (Exception e) {
 			return Flowable.error(e);
 		}

@@ -1,5 +1,7 @@
 package com.nurkiewicz.rxjava;
 
+import com.google.common.util.concurrent.ExecutionError;
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.nurkiewicz.rxjava.util.Sleeper;
 import io.reactivex.Flowable;
 import io.reactivex.Scheduler;
@@ -11,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
+import java.util.concurrent.*;
 
 import static java.time.Duration.ofMillis;
 import static java.time.Duration.ofSeconds;
@@ -37,12 +40,14 @@ public class R10_SubscribeObserveOn {
 	@Test
 	public void subscribeOnForEach() throws Exception {
 		Flowable<BigDecimal> obs = slowFromCallable();
-		
+
+		log.info("About to subscribe.");
 		obs
 				.subscribeOn(Schedulers.io())
 				.subscribe(
 						x -> log.info("Got: {}", x)
 				);
+		log.info("After subscribe.");
 		Sleeper.sleep(ofMillis(1_100));
 	}
 	
@@ -78,6 +83,7 @@ public class R10_SubscribeObserveOn {
 		final TestSubscriber<BigDecimal> subscriber = slowFromCallable()
 				.subscribeOn(myCustomScheduler())
 				.test();
+
 		await().until(() -> {
 					Thread lastSeenThread = subscriber.lastThread();
 					assertThat(lastSeenThread).isNotNull();
@@ -91,7 +97,12 @@ public class R10_SubscribeObserveOn {
 	 * Hint: ThreadFactoryBuilder
 	 */
 	private Scheduler myCustomScheduler() {
-		return Schedulers.io();
+		ThreadFactory threadFactory = new ThreadFactoryBuilder()
+				.setNameFormat("CustomExecutor-%d").build();
+		final ExecutorService executorService =
+				new ThreadPoolExecutor(10, 10, 0L, TimeUnit.MILLISECONDS,
+						new ArrayBlockingQueue<>(2), threadFactory);
+		return Schedulers.from(executorService);
 	}
 	
 	

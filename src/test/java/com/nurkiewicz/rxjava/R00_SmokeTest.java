@@ -9,7 +9,7 @@ import org.junit.Test;
 
 @Ignore
 public class R00_SmokeTest {
-	
+
 	@Test
 	public void shouldRunRxJava() throws Exception {
 		//given

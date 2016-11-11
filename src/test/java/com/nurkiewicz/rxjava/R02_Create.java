@@ -29,6 +29,7 @@ public class R02_Create {
 	public void observableUsingCreate() throws Exception {
 		Observable<String> obs = Observable.create(emitter -> {
 			emitter.onNext("A");
+			emitter.onNext("B");
 			emitter.onComplete();
 		});
 		
@@ -88,7 +89,7 @@ public class R02_Create {
 	public void cachingWhenCreateIsInvokedManyTimes() throws Exception {
 		DataSource ds = mock(DataSource.class);
 		
-		Observable<Integer> obs = queryDatabase(ds);
+		Observable<Integer> obs = queryDatabase(ds).cache();
 		
 		obs.subscribe();
 		obs.subscribe();
@@ -113,9 +114,10 @@ public class R02_Create {
 	public void infiniteObservable() throws Exception {
 		Observable<Integer> obs = Observable.create(sub -> {
 			int i = 0;
-			while (true) {
+			while (!sub.isDisposed()) {
 				sub.onNext(i++);
 			}
+			sub.onComplete();
 		});
 		
 		TestObserver<Integer> subscriber = obs
@@ -123,7 +125,8 @@ public class R02_Create {
 				.take(3)
 				.test();
 		
-		subscriber.assertValues(10, 11, 12);
+		subscriber.assertValues(10, 11, 12)
+					.assertComplete();
 	}
 	
 	/**

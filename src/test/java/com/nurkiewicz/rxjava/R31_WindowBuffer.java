@@ -13,7 +13,9 @@ public class R31_WindowBuffer {
 	@Test
 	public void everyThirdWordUsingBuffer() throws Exception {
 		//given
-		Flowable<String> everyThirdWord = LOREM_IPSUM;
+		Flowable<String> everyThirdWord = LOREM_IPSUM
+				.buffer(3)
+				.map(list -> list.get(2));
 		
 		//then
 		everyThirdWord
